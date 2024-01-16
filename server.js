@@ -1,5 +1,4 @@
-const exp = require("constants");
-const express = require("express");
+require("dotenv").config() //use environment variables in all files
 const path = require("path");
 const { logger } = require("./middleware/logger");
 const cookieParser = require("cookie-parser");
@@ -8,12 +7,15 @@ const errorHandler = require("./middleware/errorHandling");
 const corsOptions = require("./configs/corsOptions")
 const app = express();
 const PORT = process.env.PORT || 3500;
+const connectDB = require("./configs/dbConn")
+const mongoose = require("mongoose")
+const {logEvents} = require("./middleware/logger")
 
-app.use(logger);
+app.use(logger);  //custom middleware for logging  
 // app.use("/", express.static(path.join(__dirname, "/public")));
 app.use(express.static("public")); //this is a middleware
-app.use(express.json()); //process json
-app.use(cookieParser());
+app.use(express.json()); //process json data
+app.use(cookieParser()); 
 app.use(cors(corsOptions))
 
 app.use("/", require("./routes/root"));
@@ -29,6 +31,12 @@ app.all("*", (req, res) => {
   }
 });
 
-app.use(errorHandler);
+app.use(errorHandler); //custom middleware for handling errors
 
-app.listen(PORT, () => console.log("running server"));
+mongoose.connection.once('open',()=>{
+  app.listen(PORT, () => console.log("running server"));
+})
+
+mongoose.connection.on('error',()=>{
+  console.log("Error")
+})
